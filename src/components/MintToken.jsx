@@ -13,10 +13,25 @@ const MintToken = () => {
   const [balance, setBalance] = useState("0");
   const [usdtBalance, setUsdtBalance] = useState("0");
 
-  // Địa chỉ hợp đồng của USDT (hoặc token ERC-20 bạn muốn kiểm tra số dư)
-  const usdtContractAddress = "0x71e5C63727AB6067DFBfD5c90ec6E56CD53E3F43";
+  const usdtContractAddress = "0x71e5C63727AB6067DFBfD5c90ec6E56CD53E3F43"; // Địa chỉ hợp đồng USDT
 
-  // Kết nối ví
+  const fetchBalances = async (provider, account) => {
+    try {
+      // Lấy số dư ETH
+      const balanceWei = await provider.getBalance(account);
+      const balanceEth = ethers.formatEther(balanceWei);
+      setBalance(balanceEth);
+
+      // Lấy số dư token USDT
+      const usdtContract = new ethers.Contract(usdtContractAddress, erc20Abi, provider);
+      const usdtBalanceWei = await usdtContract.balanceOf(account);
+      const usdtBalanceFormatted = ethers.formatUnits(usdtBalanceWei, 18); // USDT thường có 6 hoặc 18 chữ số thập phân
+      setUsdtBalance(usdtBalanceFormatted);
+    } catch (error) {
+      console.error("Failed to fetch balances:", error);
+    }
+  };
+
   const connectWallet = async () => {
     if (!window.ethereum) {
       toast.error("Metamask is not installed!");
@@ -28,17 +43,7 @@ const MintToken = () => {
       const account = accounts[0];
       setAccount(account);
 
-      // Lấy số dư ETH
-      const balanceWei = await provider.getBalance(account);
-      const balanceEth = ethers.formatEther(balanceWei); // Chuyển đổi từ wei sang ETH
-      setBalance(balanceEth);
-
-      // Lấy số dư token USDT
-      const usdtContract = new ethers.Contract(usdtContractAddress, erc20Abi, provider);
-      const usdtBalanceWei = await usdtContract.balanceOf(account);
-      const usdtBalanceFormatted = ethers.formatUnits(usdtBalanceWei, 18); // USDT thường có 6 chữ số thập phân
-      setUsdtBalance(usdtBalanceFormatted);
-
+      await fetchBalances(provider, account); // Lấy số dư ban đầu
       setWalletConnected(true);
       toast.success(`Connected: ${account}`);
     } catch (error) {
@@ -47,7 +52,6 @@ const MintToken = () => {
     }
   };
 
-  // Hàm mint token
   const mintToken = async () => {
     if (!walletConnected) {
       toast.error("Please connect your wallet first.");
@@ -64,10 +68,13 @@ const MintToken = () => {
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(contractAddress, abi, signer);
 
-      const tx = await contract.mint(account, ethers.parseUnits(mintAmount, 18)); // parseUnits in v6
+      const tx = await contract.mint(account, ethers.parseUnits(mintAmount, 18));
       toast.info("Minting in progress...");
       await tx.wait();
       toast.success("Token minted successfully!");
+
+      // Cập nhật số dư sau khi mint
+      await fetchBalances(provider, account);
     } catch (error) {
       console.error(error);
       toast.error("Failed to mint tokens.");
@@ -87,9 +94,8 @@ const MintToken = () => {
             <strong>Wallet Address:</strong> {account}
           </p>
           <p>
-            <strong>Balance:</strong> {balance} ETH
+            <strong>ETH Balance:</strong> {balance} ETH
           </p>
-
           <p>
             <strong>USDT Address:</strong> {usdtContractAddress}
           </p>
