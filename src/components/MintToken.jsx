@@ -1,24 +1,22 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 import abi from "../contract_ABI.json";
+import erc20Abi from "../erc20_ABI.json"; // ABI tiêu chuẩn ERC-20
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-//const bscTestnetChainId = "0x61"; // Chain ID của BSC Testnet
 
 const MintToken = () => {
   const [mintAmount, setMintAmount] = useState("");
   const [contractAddress, setContractAddress] = useState("");
   const [walletConnected, setWalletConnected] = useState(false);
   const [account, setAccount] = useState("");
-  const [contract, setContract] = useState(null);
+  const [balance, setBalance] = useState("0");
   const [usdtBalance, setUsdtBalance] = useState("0");
-  
-  //const contractAddress = "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"; // Địa chỉ hợp đồng
-  const usdtContractAddress = "0x71e5C63727AB6067DFBfD5c90ec6E56CD53E3F43"; // Địa chỉ hợp đồng của USDT
-  const usdtAbi = [
-    "function balanceOf(address owner) view returns (uint256)", // ABI cần thiết để lấy số dư
-  ];
+
+  // Địa chỉ hợp đồng của USDT (hoặc token ERC-20 bạn muốn kiểm tra số dư)
+  const usdtContractAddress = "0x71e5C63727AB6067DFBfD5c90ec6E56CD53E3F43";
+
+  // Kết nối ví
   const connectWallet = async () => {
     if (!window.ethereum) {
       toast.error("Metamask is not installed!");
@@ -27,30 +25,29 @@ const MintToken = () => {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum); // ethers v6
       const accounts = await provider.send("eth_requestAccounts", []);
-      setAccount(accounts[0]);
+      const account = accounts[0];
+      setAccount(account);
+
+      // Lấy số dư ETH
+      const balanceWei = await provider.getBalance(account);
+      const balanceEth = ethers.formatEther(balanceWei); // Chuyển đổi từ wei sang ETH
+      setBalance(balanceEth);
+
+      // Lấy số dư token USDT
+      const usdtContract = new ethers.Contract(usdtContractAddress, erc20Abi, provider);
+      const usdtBalanceWei = await usdtContract.balanceOf(account);
+      const usdtBalanceFormatted = ethers.formatUnits(usdtBalanceWei, 6); // USDT thường có 6 chữ số thập phân
+      setUsdtBalance(usdtBalanceFormatted);
+
       setWalletConnected(true);
-      toast.success(`Connected: ${accounts[0]}`);
+      toast.success(`Connected: ${account}`);
     } catch (error) {
+      console.error(error);
       toast.error("Failed to connect wallet.");
     }
   };
 
-const fetchUsdtBalance = async (signer) => {
-    if (!usdtContractAddress) {
-      console.error("USDT contract address is missing.");
-      return;
-    }
-
-    try {
-      const usdtContract = new ethers.Contract(usdtContractAddress, usdtAbi, signer);
-      const balance = await usdtContract.balanceOf(await signer.getAddress());
-      setUsdtBalance(ethers.formatUnits(balance, 18));
-    } catch (error) {
-      console.error("Error fetching USDT balance:", error);
-      toast.error("Failed to fetch USDT balance.");
-    }
-  };
-  
+  // Hàm mint token
   const mintToken = async () => {
     if (!walletConnected) {
       toast.error("Please connect your wallet first.");
@@ -81,13 +78,24 @@ const fetchUsdtBalance = async (signer) => {
     <div style={{ padding: "20px" }}>
       <ToastContainer />
       <h1>Mint Token</h1>
-      <h2>Contract: 0x71e5C63727AB6067DFBfD5c90ec6E56CD53E3F43</h2>
       <button onClick={connectWallet} disabled={walletConnected}>
         {walletConnected ? "Wallet Connected" : "Connect Wallet"}
       </button>
       {walletConnected && (
-        <div style={{ marginTop: "10px" }}>
-          <p>Your USDT Balance: {usdtBalance} USDT</p>
+        <div style={{ marginTop: "20px" }}>
+          <p>
+            <strong>Wallet Address:</strong> {account}
+          </p>
+          <p>
+            <strong>Balance:</strong> {balance} ETH
+          </p>
+
+          <p>
+            <strong>USDT Address:</strong> {usdtContractAddress}
+          </p>
+          <p>
+            <strong>USDT Balance:</strong> {usdtBalance} USDT
+          </p>
         </div>
       )}
       <div style={{ marginTop: "20px" }}>
