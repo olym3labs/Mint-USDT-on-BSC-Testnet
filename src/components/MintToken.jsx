@@ -36,7 +36,7 @@ const MintToken = () => {
       // Lấy số dư token USDT
       const usdtContract = new ethers.Contract(usdtContractAddress, erc20Abi, provider);
       const usdtBalanceWei = await usdtContract.balanceOf(account);
-      const usdtBalanceFormatted = ethers.formatUnits(usdtBalanceWei, 6); // USDT thường có 6 chữ số thập phân
+      const usdtBalanceFormatted = ethers.formatUnits(usdtBalanceWei, 18); // USDT thường có 6 chữ số thập phân
       setUsdtBalance(usdtBalanceFormatted);
 
       setWalletConnected(true);
