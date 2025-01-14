@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
-import abi from "../contractABI.json";
+import abi from "../contract_ABI.json";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -59,6 +59,7 @@ const MintToken = () => {
     <div style={{ padding: "20px" }}>
       <ToastContainer />
       <h1>Mint Token</h1>
+      <h2>Contract: 0x71e5C63727AB6067DFBfD5c90ec6E56CD53E3F43</h2>
       <button onClick={connectWallet} disabled={walletConnected}>
         {walletConnected ? "Wallet Connected" : "Connect Wallet"}
       </button>
