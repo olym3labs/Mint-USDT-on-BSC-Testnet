@@ -13,7 +13,7 @@ const MintToken2 = () => {
   const [usdtBalance, setUsdtBalance] = useState("0");
 
   const contractAddress = "0xa90FED1Ba828cE85cCAa45e84b5FCFa1b21fE5ac";
-  const usdtContractAddress = "0xa90FED1Ba828cE85cCAa45e84b5FCFa1b21fE5ac"; // Địa chỉ hợp đồng của USDT
+  const usdtContractAddress = "0x71e5C63727AB6067DFBfD5c90ec6E56CD53E3F43"; // Địa chỉ hợp đồng của USDT
   const usdtAbi = [
     "function balanceOf(address owner) view returns (uint256)", // ABI cần thiết để lấy số dư
   ];
