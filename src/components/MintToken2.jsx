@@ -10,8 +10,13 @@ const MintToken2 = () => {
   const [account, setAccount] = useState("");
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
+  const [usdtBalance, setUsdtBalance] = useState("0");
 
   const contractAddress = "0xa90FED1Ba828cE85cCAa45e84b5FCFa1b21fE5ac";
+  const usdtContractAddress = "0xa90FED1Ba828cE85cCAa45e84b5FCFa1b21fE5ac"; // Địa chỉ hợp đồng của USDT
+  const usdtAbi = [
+    "function balanceOf(address owner) view returns (uint256)", // ABI cần thiết để lấy số dư
+  ];
   const BSC_TESTNET_CHAIN_ID = "0x61"; // Chain ID for BSC Testnet
   const tokenDetails = {
     address: contractAddress,
@@ -76,7 +81,22 @@ const MintToken2 = () => {
       toast.error("Failed to connect wallet. Please try again.");
     }
   };
+const fetchUsdtBalance = async (signer) => {
+    if (!usdtContractAddress) {
+      console.error("USDT contract address is missing.");
+      return;
+    }
 
+    try {
+      const usdtContract = new ethers.Contract(usdtContractAddress, usdtAbi, signer);
+      const balance = await usdtContract.balanceOf(await signer.getAddress());
+      setUsdtBalance(ethers.formatUnits(balance, 18));
+    } catch (error) {
+      console.error("Error fetching USDT balance:", error);
+      toast.error("Failed to fetch USDT balance.");
+    }
+  };
+  
   const mintTokens = async () => {
     if (!walletConnected || !contract) {
       toast.error("Please connect your wallet first!");
@@ -100,21 +120,16 @@ const MintToken2 = () => {
   };
 
   const addTokenToMetaMask = async () => {
-    if (!window.ethereum) {
-      toast.error("Metamask is not installed!");
-      return;
-    }
-
     try {
       await window.ethereum.request({
         method: "wallet_watchAsset",
         params: {
           type: "ERC20",
           options: {
-            address: tokenDetails.address,
-            symbol: tokenDetails.symbol,
-            decimals: tokenDetails.decimals,
-            image: tokenDetails.image,
+            address: contractAddress,
+            symbol: "TOKEN",
+            decimals: 18,
+            image: "https://your-token-image-url.com",
           },
         },
       });
@@ -132,6 +147,11 @@ const MintToken2 = () => {
       <button onClick={connectWallet}>
         {walletConnected ? `Connected: ${account.slice(0, 6)}...${account.slice(-4)}` : "Connect Wallet"}
       </button>
+      {walletConnected && (
+        <div style={{ marginTop: "10px" }}>
+          <p>Your USDT Balance: {usdtBalance} USDT</p>
+        </div>
+      )}
       <div style={{ marginTop: "20px" }}>
         <input
           type="number"
