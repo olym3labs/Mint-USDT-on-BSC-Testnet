@@ -9,7 +9,6 @@ function App() {
     <div className="App">
       <div>
         <MintToken />
-        <MintToken2 />
       </div>
     </div>
   );
